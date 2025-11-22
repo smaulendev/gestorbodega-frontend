@@ -113,29 +113,34 @@ export default function ProductosView() {
   };
 
   return (
-    <div className="p-6 text-white">
-      <h1 className="text-2xl font-bold mb-4">Productos</h1>
+    <div className="max-w-7xl mx-auto p-8">
+      {/* TÍTULO */}
+      <h1 className="text-4xl font-bold mb-8 tracking-tight">Productos</h1>
 
       {/* FORMULARIO COMPONENTE */}
-      <ProductoForm
-        form={form}
-        onChange={handleChange}
-        onSubmit={handleSubmit}
-        modoEdicion={modoEdicion}
-        onCancel={resetForm}
-      />
+      <div className="max-w-lg">
+        <ProductoForm
+          form={form}
+          onChange={handleChange}
+          onSubmit={handleSubmit}
+          modoEdicion={modoEdicion}
+          onCancel={resetForm}
+        />
+      </div>
 
       {/* LISTADO COMPONENTE */}
-      <ul className="space-y-2 max-w-md mt-6">
-        {productos.map((p) => (
-          <ProductoCard
-            key={p.id}
-            producto={p}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        ))}
-      </ul>
+      <div className="mt-10 max-w-xl">
+        <ul className="space-y-4">
+          {productos.map((p) => (
+            <ProductoCard
+              key={p.id}
+              producto={p}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

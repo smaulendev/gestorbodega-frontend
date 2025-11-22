@@ -16,3 +16,8 @@ export const deleteLote = async (id: number) => {
   const res = await axios.delete(`${API}/${id}`);
   return res.data;
 };
+
+export const getLotesByProducto = async (productoId: number) => {
+  const res = await axios.get(`${API}/producto/${productoId}`);
+  return res.data;
+};

@@ -1,57 +1,49 @@
-import type { ChangeEvent, FormEvent } from "react";
-import type { Producto } from "../../types/Producto";
+import React from "react";
 
-type Props = {
-  form: {
-    numero: string;
-    fechaExpiracion: string;
-    productoId: string;
-  };
-  productos: Producto[];
-  onChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  onSubmit: (e: FormEvent) => void;
-};
+interface Props {
+  form: any;
+  productos: any[];
+  onChange: any;
+  onSubmit: any;
+}
 
 export default function LoteForm({ form, productos, onChange, onSubmit }: Props) {
   return (
-    <form onSubmit={onSubmit} className="bg-white p-4 rounded shadow text-black space-y-3 max-w-md">
-      <input
-        name="numero"
-        value={form.numero}
-        onChange={onChange}
-        placeholder="Número de lote"
-        className="border p-2 w-full"
-        required
-      />
+    <form
+      onSubmit={onSubmit}
+      className="bg-gray-800 p-4 rounded-lg shadow-md space-y-4 max-w-md"
+    >
+      <div>
+        <label className="text-sm font-semibold">Producto</label>
+        <select
+          name="productoId"
+          value={form.productoId}
+          onChange={onChange}
+          className="w-full p-2 bg-gray-700 text-white rounded"
+          required
+        >
+          <option value="">Seleccione</option>
+          {productos.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.nombre}
+            </option>
+          ))}
+        </select>
+      </div>
 
-      <input
-        type="date"
-        name="fechaExpiracion"
-        value={form.fechaExpiracion}
-        onChange={onChange}
-        className="border p-2 w-full"
-        required
-      />
+      <div>
+        <label className="text-sm font-semibold">Fecha de Caducidad</label>
+        <input
+          type="date"
+          name="fechaCaducidad"
+          value={form.fechaCaducidad}
+          onChange={onChange}
+          className="w-full p-2 bg-gray-700 text-white rounded"
+          required
+        />
+      </div>
 
-      <select
-        name="productoId"
-        value={form.productoId}
-        onChange={onChange}
-        className="border p-2 w-full"
-        required
-      >
-        <option value="">Seleccionar producto</option>
-        {productos.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.nombre}
-          </option>
-        ))}
-      </select>
-
-      <button
-        type="submit"
-        className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded w-full"
-      >
+      <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
         Crear Lote
       </button>
     </form>

@@ -1,25 +1,21 @@
-import type { Lote } from "../../types/Lote";
+import React from "react";
 
-type Props = {
-  lote: Lote;
-  onDelete: (id: number) => void;
-};
-
-export default function LoteCard({ lote, onDelete }: Props) {
+export default function LoteCard({ lote, onDelete }) {
   return (
-    <li className="border p-3 rounded bg-white text-black shadow">
-      <strong>Lote {lote.numero}</strong> <br />
-      Expira: {new Date(lote.fechaExpiracion).toLocaleDateString()} <br />
-      Producto: {lote.producto?.nombre || "N/A"}
+    <li className="bg-gray-800 p-4 rounded-lg shadow text-white">
+      <p><strong>Código:</strong> {lote.codigoLote}</p>
+      <p><strong>Producto:</strong> {lote.producto?.nombre}</p>
+      <p>
+        <strong>Caducidad:</strong>{" "}
+        {new Date(lote.fechaCaducidad).toLocaleDateString()}
+      </p>
 
-      <div className="mt-2">
-        <button
-          onClick={() => onDelete(lote.id)}
-          className="text-red-600 hover:underline"
-        >
-          Eliminar
-        </button>
-      </div>
+      <button
+        className="mt-3 text-red-400 hover:text-red-600"
+        onClick={() => onDelete(lote.id)}
+      >
+        Eliminar
+      </button>
     </li>
   );
 }

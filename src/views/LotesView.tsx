@@ -1,57 +1,52 @@
 import { useEffect, useState } from "react";
 import { getLotes, createLote, deleteLote } from "../services/lotesServices";
 import { getProductos } from "../services/productosServices";
-
-import { LoteForm, LoteCard } from "../components/lotes";
-import type { Lote } from "../types/Lote";
-import type { Producto } from "../types/Producto";
+import LoteForm from "../components/lotes/LoteForm";
+import LoteCard from "../components/lotes/LoteCard";
 
 export default function LotesView() {
-  const [lotes, setLotes] = useState<Lote[]>([]);
-  const [productos, setProductos] = useState<Producto[]>([]);
+  const [lotes, setLotes] = useState([]);
+  const [productos, setProductos] = useState([]);
 
   const [form, setForm] = useState({
-    numero: "",
-    fechaExpiracion: "",
     productoId: "",
+    fechaCaducidad: "",
   });
 
-  const loadData = async () => {
+  const cargarTodo = async () => {
     setLotes(await getLotes());
     setProductos(await getProductos());
   };
 
   useEffect(() => {
-    loadData();
+    cargarTodo();
   }, []);
 
-  const handleChange = (e: any) => {
+  const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     await createLote({
-      numero: form.numero,
-      fechaExpiracion: form.fechaExpiracion,
       productoId: Number(form.productoId),
+      fechaCaducidad: form.fechaCaducidad,
     });
 
-    setForm({ numero: "", fechaExpiracion: "", productoId: "" });
-
-    loadData();
+    await cargarTodo();
+    setForm({ productoId: "", fechaCaducidad: "" });
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id) => {
     if (!confirm("¿Eliminar lote?")) return;
     await deleteLote(id);
-    loadData();
+    await cargarTodo();
   };
 
   return (
-    <div className="p-6 text-white">
-      <h1 className="text-2xl font-bold mb-4">Lotes</h1>
+    <div className="p-6 text-white space-y-6">
+      <h1 className="text-3xl font-bold">Lotes</h1>
 
       <LoteForm
         form={form}
@@ -60,9 +55,9 @@ export default function LotesView() {
         onSubmit={handleSubmit}
       />
 
-      <ul className="space-y-2 max-w-md mt-6">
-        {lotes.map((l) => (
-          <LoteCard key={l.id} lote={l} onDelete={handleDelete} />
+      <ul className="space-y-3">
+        {lotes.map((lote) => (
+          <LoteCard key={lote.id} lote={lote} onDelete={handleDelete} />
         ))}
       </ul>
     </div>
