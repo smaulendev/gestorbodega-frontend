@@ -24,7 +24,9 @@ export default function IngresarStockView() {
     cantidad: "",
   });
 
+  // -----------------------------
   // Cargar productos y bodegas al iniciar
+  // -----------------------------
   useEffect(() => {
     cargarProductos();
     cargarBodegas();
@@ -40,9 +42,15 @@ export default function IngresarStockView() {
     setBodegas(res);
   };
 
-  // Cargar lotes cuando cambia el producto
+  // -----------------------------
+  // Cargar lotes cuando cambia producto
+  // -----------------------------
   useEffect(() => {
-    if (form.productoId) cargarLotes(form.productoId);
+    if (form.productoId) {
+      cargarLotes(form.productoId);
+    } else {
+      setLotes([]);
+    }
   }, [form.productoId]);
 
   const cargarLotes = async (productoId) => {
@@ -50,9 +58,15 @@ export default function IngresarStockView() {
     setLotes(res);
   };
 
-  // Cargar ubicaciones cuando cambia la bodega
+  // -----------------------------
+  // Cargar ubicaciones cuando cambia bodega
+  // -----------------------------
   useEffect(() => {
-    if (form.bodegaId) cargarUbicaciones(form.bodegaId);
+    if (form.bodegaId) {
+      cargarUbicaciones(form.bodegaId);
+    } else {
+      setUbicaciones([]);
+    }
   }, [form.bodegaId]);
 
   const cargarUbicaciones = async (bodegaId) => {
@@ -60,6 +74,9 @@ export default function IngresarStockView() {
     setUbicaciones(res);
   };
 
+  // -----------------------------
+  // Manejo de cambios en inputs/selects
+  // -----------------------------
   const handleChange = (e) => {
     setForm({
       ...form,
@@ -67,75 +84,72 @@ export default function IngresarStockView() {
     });
   };
 
- // -----------------------------
-// ✔ Handle Submit FINAL
-// -----------------------------
-const handleSubmit = async () => {
-  setLoading(true);
-  setError(null);
-  setSuccess(null);
+  // -----------------------------
+  // ✔ Handle Submit FINAL
+  // -----------------------------
+  const handleSubmit = async () => {
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
 
-  // VALIDAR CAMPOS OBLIGATORIOS
-  if (
-    !form.productoId ||
-    !form.loteId ||
-    !form.bodegaId ||
-    !form.ubicacionId ||
-    !form.cantidad
-  ) {
-    setError("Debe completar todos los campos antes de ingresar stock.");
+    // VALIDACIÓN
+    if (
+      !form.productoId ||
+      !form.loteId ||
+      !form.bodegaId ||
+      !form.ubicacionId ||
+      !form.cantidad
+    ) {
+      setError("Debe completar todos los campos antes de ingresar stock.");
+      setLoading(false);
+      return;
+    }
+
+    const payload = {
+      productoId: Number(form.productoId),
+      loteId: Number(form.loteId),
+      bodegaId: Number(form.bodegaId),
+      ubicacionId: Number(form.ubicacionId),
+      cantidad: Number(form.cantidad),
+    };
+
+    const res = await ingresarStock(payload);
+
     setLoading(false);
-    return;
-  }
 
-  // CREAR PAYLOAD NUMÉRICO
-  const payload = {
-    productoId: Number(form.productoId),
-    loteId: Number(form.loteId),
-    bodegaId: Number(form.bodegaId),
-    ubicacionId: Number(form.ubicacionId),
-    cantidad: Number(form.cantidad),
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+
+    // ÉXITO
+    setSuccess("Stock ingresado correctamente");
+
+    // RESET FORM
+    setForm({
+      productoId: "",
+      loteId: "",
+      bodegaId: "",
+      ubicacionId: "",
+      cantidad: "",
+    });
+
+    setLotes([]);
+    setUbicaciones([]);
   };
 
-  const res = await ingresarStock(payload);
-
-  setLoading(false);
-
-  // RESPUESTA: ERROR
-  if (!res.ok) {
-    setError(res.error);
-    return;
-  }
-
-  // RESPUESTA: ÉXITO
-  setSuccess("Stock ingresado correctamente");
-
-  // RESET FORMULARIO
-  setForm({
-    productoId: "",
-    loteId: "",
-    bodegaId: "",
-    ubicacionId: "",
-    cantidad: "",
-  });
-
-  // Reset de selects dependientes
-  setLotes([]);
-  setUbicaciones([]);
-};
-
+  // -----------------------------
+  // RENDER
+  // -----------------------------
   return (
     <div className="p-5 text-white">
       <h1 className="text-2xl mb-5">Ingresar Stock</h1>
 
-      {/* Errores y mensajes */}
-      {error && (
-        <div className="bg-red-600 p-3 rounded mb-3">{error}</div>
-      )}
+      {/* Errores */}
+      {error && <div className="bg-red-600 p-3 rounded mb-3">{error}</div>}
 
-      {success && (
-        <div className="bg-green-600 p-3 rounded mb-3">{success}</div>
-      )}
+      {/* Mensaje éxito */}
+      {success && <div className="bg-green-600 p-3 rounded mb-3">{success}</div>}
 
       {/* Producto */}
       <select
@@ -162,8 +176,7 @@ const handleSubmit = async () => {
         <option value="">Seleccione un lote</option>
         {lotes.map((l) => (
           <option key={l.id} value={l.id}>
-            {l.codigoLote} — vence{" "}
-            {new Date(l.fechaCaducidad).toLocaleDateString()}
+            {l.codigoLote} — vence {new Date(l.fechaCaducidad).toLocaleDateString()}
           </option>
         ))}
       </select>

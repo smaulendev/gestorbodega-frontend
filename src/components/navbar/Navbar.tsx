@@ -10,6 +10,7 @@ export default function Navbar() {
           <span className="text-blue-400">Bodega</span> FEFO
         </Link>
         <Link to="/bodegas" className="hover:text-blue-400">Bodegas</Link>
+        <Link to="/inventario">Inventario</Link>
 
 
         {/* MENÚ */}

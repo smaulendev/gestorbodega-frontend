@@ -6,3 +6,19 @@ body {
   @apply bg-gray-900 text-white antialiased;
   font-family: 'Inter', sans-serif;
 }
+
+/* Estados del inventario */
+.estado-disponible {
+  color: #22c55e; /* verde */
+  font-weight: bold;
+}
+
+.estado-reservado {
+  color: #eab308; /* amarillo */
+  font-weight: bold;
+}
+
+.estado-transito {
+  color: #3b82f6; /* azul */
+  font-weight: bold;
+}
