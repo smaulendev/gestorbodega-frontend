@@ -1,11 +1,16 @@
 import Navbar from "./components/navbar/Navbar";
 import AppRouter from "./routes/AppRouter";
+import { useAuth } from "./context/AuthContext";
 
-export default function App() {
+function App() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <>
-      <Navbar />
+      {isAuthenticated && <Navbar />}
       <AppRouter />
     </>
   );
 }
+
+export default App;
