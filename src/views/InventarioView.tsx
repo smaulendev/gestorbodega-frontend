@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getInventario } from "../services/inventarioServices";
+import { getInventario, getInventarioFiltrado } from "../services/inventarioServices";
 import { getProductos } from "../services/productosServices";
 import { getBodegas } from "../services/bodegasServices";
 import { getLotes } from "../services/lotesServices";
@@ -21,12 +21,12 @@ export default function InventarioView() {
     estado: "",
   });
 
-  // ===================================================================
-  // 🔵 CARGA DE FILTROS
-  // ===================================================================
+  // ===========================================================
+  // 🔵 Cargar filtros + inventario general
+  // ===========================================================
   useEffect(() => {
     cargarFiltros();
-    cargarInventario();
+    cargarInventarioGeneral();
   }, []);
 
   const cargarFiltros = async () => {
@@ -39,44 +39,66 @@ export default function InventarioView() {
     }
   };
 
-  // ===================================================================
-  // 🔵 CARGAR INVENTARIO + FILTROS
-  // ===================================================================
-  const cargarInventario = async (override = {}) => {
+  // ===========================================================
+  // 🔵 Cargar inventario general
+  // ===========================================================
+  const cargarInventarioGeneral = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const params = { ...filters, ...override };
-
-      // Eliminar filtros vacíos
-      Object.keys(params).forEach(
-        (key) => (params[key] === "" || params[key] == null) && delete params[key]
-      );
-
-      const res = await getInventario(params);
+      const res = await getInventario();
 
       if (!res.ok) {
-        setError("Error cargando inventario.");
+        setError("Error cargando inventario general.");
         setItems([]);
       } else {
         setItems(res.data);
       }
     } catch (err) {
-      setError("No se pudo obtener el inventario.");
+      setError("No se pudo obtener el inventario general.");
     }
 
     setLoading(false);
   };
 
-  // ===================================================================
-  // 🔵 HANDLE CHANGE
-  // ===================================================================
+  // ===========================================================
+  // 🔵 Cargar inventario filtrado
+  // ===========================================================
+  const cargarInventarioFiltrado = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const params = { ...filters };
+
+      Object.keys(params).forEach(
+        (key) => (params[key] === "" || params[key] == null) && delete params[key]
+      );
+
+      const res = await getInventarioFiltrado(params);
+
+      if (!res.ok) {
+        setError("Error cargando inventario filtrado.");
+        setItems([]);
+      } else {
+        setItems(res.data);
+      }
+    } catch (err) {
+      setError("No se pudo obtener el inventario filtrado.");
+    }
+
+    setLoading(false);
+  };
+
+  // ===========================================================
+  // 🔵 Eventos
+  // ===========================================================
   const handleChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
-  const aplicarFiltros = () => cargarInventario();
+  const aplicarFiltros = () => cargarInventarioFiltrado();
 
   const limpiarFiltros = () => {
     const limpio = {
@@ -85,22 +107,20 @@ export default function InventarioView() {
       loteId: "",
       estado: "",
     };
+
     setFilters(limpio);
-    cargarInventario(limpio);
+    cargarInventarioGeneral();
   };
 
-  // ===================================================================
-  // 🔵 FUNCIÓN PARA ASIGNAR CLASE SEGÚN ESTADO
-  // ===================================================================
   const estadoClass = (estado) => {
     if (estado === "Disponible") return "estado-disponible";
     if (estado === "Reservado") return "estado-reservado";
-    return "estado-transito"; // cualquier otro será tránsito
+    return "estado-transito"; 
   };
 
-  // ===================================================================
-  // 🔵 RENDER
-  // ===================================================================
+  // ===========================================================
+  // 🔵 Render
+  // ===========================================================
   return (
     <div className="p-5 text-white">
       <h1 className="text-2xl mb-5">Inventario General</h1>
@@ -109,7 +129,6 @@ export default function InventarioView() {
       <div className="bg-gray-800 p-4 rounded mb-5">
         <div className="grid grid-cols-4 gap-4">
 
-          {/* Producto */}
           <select
             name="productoId"
             value={filters.productoId}
@@ -122,7 +141,6 @@ export default function InventarioView() {
             ))}
           </select>
 
-          {/* Bodega */}
           <select
             name="bodegaId"
             value={filters.bodegaId}
@@ -135,7 +153,6 @@ export default function InventarioView() {
             ))}
           </select>
 
-          {/* Lote */}
           <select
             name="loteId"
             value={filters.loteId}
@@ -148,7 +165,6 @@ export default function InventarioView() {
             ))}
           </select>
 
-          {/* Estado */}
           <select
             name="estado"
             value={filters.estado}
@@ -166,6 +182,7 @@ export default function InventarioView() {
           <button onClick={aplicarFiltros} className="bg-blue-600 p-2 px-4 rounded">
             Aplicar
           </button>
+
           <button onClick={limpiarFiltros} className="bg-gray-500 p-2 px-4 rounded">
             Limpiar
           </button>
@@ -182,19 +199,19 @@ export default function InventarioView() {
       {!loading &&
         items.map((inv) => (
           <div key={inv.id} className="bg-gray-800 p-5 rounded mb-4">
-
-            {/* Nombre + Estado */}
             <p className="text-xl font-bold flex justify-between">
-              <span>{inv.producto.nombre} — {inv.lote.codigoLote}</span>
+              <span>
+                {inv.producto?.nombre} — {inv.lote?.codigoLote}
+              </span>
 
               <span className={estadoClass(inv.estadoStock)}>
                 {inv.estadoStock}
               </span>
             </p>
 
-            <p>Vence: {new Date(inv.lote.fechaCaducidad).toLocaleDateString()}</p>
-            <p><strong>Bodega:</strong> {inv.bodega.nombre}</p>
-            <p><strong>Ubicación:</strong> {inv.ubicacion.nombre}</p>
+            <p>Vence: {new Date(inv.lote?.fechaCaducidad).toLocaleDateString()}</p>
+            <p><strong>Bodega:</strong> {inv.bodega?.nombre}</p>
+            <p><strong>Ubicación:</strong> {inv.ubicacion?.nombre}</p>
 
             <div className="mt-2">
               <p><strong>Cantidad total:</strong> {inv.cantidad}</p>

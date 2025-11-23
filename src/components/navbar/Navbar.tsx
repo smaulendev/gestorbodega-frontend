@@ -11,6 +11,7 @@ export default function Navbar() {
         </Link>
         <Link to="/bodegas" className="hover:text-blue-400">Bodegas</Link>
         <Link to="/inventario">Inventario</Link>
+        <Link to="/picking-fefo">Picking FEFO</Link>
 
 
         {/* MENÚ */}

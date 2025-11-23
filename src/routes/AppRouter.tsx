@@ -7,6 +7,7 @@ import TransferenciasView from "../views/TransferenciasView";
 import BodegasView from "../views/BodegasView";
 import InventarioView from "../views/InventarioView";
 import MovimientosView from "../views/MovimientosView";
+import PickingFefoView from "../views/PickingFefoView";
 
 export default function AppRouter() {
   return (
@@ -20,6 +21,8 @@ export default function AppRouter() {
       <Route path="/movimientos" element={<MovimientosView />} />
       <Route path="/inventario" element={<InventarioView />} />  
       <Route path="/movimientos" element={<MovimientosView />} /> 
+      <Route path="/picking-fefo" element={<PickingFefoView />} />
+
       
     </Routes>
   );

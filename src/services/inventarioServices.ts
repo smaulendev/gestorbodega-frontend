@@ -2,9 +2,9 @@ import axios from "axios";
 
 const API = "http://localhost:3000/inventario";
 
-// --------------------------------------
-// ✔ Ingresar Stock
-// --------------------------------------
+// -------------------------------------------------------------
+// ✔ INGRESAR STOCK
+// -------------------------------------------------------------
 export const ingresarStock = async (data: any) => {
   try {
     const res = await axios.post(`${API}/ingresar`, data);
@@ -21,18 +21,83 @@ export const ingresarStock = async (data: any) => {
   }
 };
 
-// --------------------------------------
-// ✔ Obtener inventario general
-// --------------------------------------
-
-export const getInventario = async (params = {}) => {
+// -------------------------------------------------------------
+// ✔ INVENTARIO GENERAL
+// -------------------------------------------------------------
+export const getInventario = async () => {
   try {
-    const res = await axios.get(API, { params });
+    const res = await axios.get(`${API}/general`);
     return { ok: true, data: res.data };
-  } catch (error) {
+
+  } catch (error: any) {
     return {
       ok: false,
-      error: error.response?.data?.message || "Error al obtener inventario",
+      error:
+        error.response?.data?.message ||
+        "Error al obtener inventario general",
     };
   }
+};
+
+// -------------------------------------------------------------
+// ✔ INVENTARIO FILTRADO (producto, lote, bodega, estado)
+// -------------------------------------------------------------
+export const getInventarioFiltrado = async (params: any = {}) => {
+  try {
+    const res = await axios.get(`${API}/filtrar`, { params });
+    return { ok: true, data: res.data };
+
+  } catch (error: any) {
+    return {
+      ok: false,
+      error:
+        error.response?.data?.message ||
+        "Error al obtener inventario filtrado",
+    };
+  }
+};
+
+// -------------------------------------------------------------
+// ✔ SUGERENCIA FEFO (HU002)
+// -------------------------------------------------------------
+export const obtenerFefo = async (sku: string) => {
+  try {
+    const res = await axios.get(`${API}/fefo/${sku}`);
+    return { ok: true, data: res.data };
+
+  } catch (error: any) {
+    return {
+      ok: false,
+      error: error.response?.data?.message || "Error al obtener FEFO",
+    };
+  }
+};
+
+// -------------------------------------------------------------
+// ✔ CONFIRMAR PICKING FEFO (HU002)
+// -------------------------------------------------------------
+export const confirmarPicking = async (data: any) => {
+  try {
+    const res = await axios.post(`${API}/picking`, data);
+    return { ok: true, data: res.data };
+
+  } catch (error: any) {
+    return {
+      ok: false,
+      error:
+        error.response?.data?.message ||
+        "Error al confirmar picking FEFO",
+    };
+  }
+};
+
+// -------------------------------------------------------------
+// ✔ EXPORTACIÓN ORDENADA (por si prefieres un objeto)
+// -------------------------------------------------------------
+export const InventarioService = {
+  ingresarStock,
+  getInventario,
+  getInventarioFiltrado,
+  obtenerFefo,
+  confirmarPicking,
 };
