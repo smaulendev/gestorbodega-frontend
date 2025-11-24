@@ -1,68 +1,37 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import axios from "axios";
 import { Html5Qrcode } from "html5-qrcode";
-
-// ===== COMPONENTES =====
-
-const Button = (props: any) => (
-  <button
-    {...props}
-    className={`px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 w-full ${
-      props.className ?? ""
-    }`}
-  />
-);
-
-const Input = (props: any) => (
-  <input
-    {...props}
-    className={`px-3 py-2 border rounded w-full text-black ${props.className ?? ""}`}
-  />
-);
-
-const Label = (props: any) => (
-  <label
-    {...props}
-    className={`font-semibold block mb-1 ${props.className ?? ""}`}
-  />
-);
-
-const Card = (props: any) => (
-  <div
-    {...props}
-    className={`p-4 rounded-xl shadow-md bg-white/10 backdrop-blur border border-white/20 ${
-      props.className ?? ""
-    }`}
-  />
-);
-
-// ==================================================
+import {
+  ScanLine,
+  Camera,
+  Image as ImageIcon,
+  Check,
+  PackageSearch,
+} from "lucide-react";
 
 const API = "http://localhost:3000/inventario";
 
-const PickingFefoView: React.FC = () => {
+export default function PickingFefoView() {
   const [sku, setSku] = useState("");
   const [fefoData, setFefoData] = useState<any>(null);
   const [codigoLoteEscaneado, setCodigoLoteEscaneado] = useState("");
   const [cantidad, setCantidad] = useState(1);
 
   const [usandoCamara, setUsandoCamara] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   let qrScanner: Html5Qrcode | null = null;
 
-  // =====================================================
-  // 🔹 ABRIR INPUT DE ARCHIVOS
-  // =====================================================
+  // ===========================================
   const abrirSelectorArchivo = () => {
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Limpiar selección anterior
+      fileInputRef.current.value = "";
       fileInputRef.current.click();
     }
   };
 
-  // =====================================================
-  // 🔹 PROCESAR IMAGEN (modo archivo)
-  // =====================================================
   const procesarImagen = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -73,14 +42,10 @@ const PickingFefoView: React.FC = () => {
       const result = await html5Qr.scanFile(file, true);
       handleScanSku(result);
     } catch (err) {
-      alert("No se pudo leer el código QR desde la imagen.");
-      console.error(err);
+      setError("No se pudo leer el código QR desde la imagen.");
     }
   };
 
-  // =====================================================
-  // 🔹 INICIAR CÁMARA
-  // =====================================================
   const iniciarCamara = async () => {
     setUsandoCamara(true);
 
@@ -90,7 +55,7 @@ const PickingFefoView: React.FC = () => {
       const devices = await Html5Qrcode.getCameras();
 
       if (!devices || devices.length === 0) {
-        alert("No se detectan cámaras en este dispositivo.");
+        setError("No hay cámaras disponibles.");
         setUsandoCamara(false);
         return;
       }
@@ -102,43 +67,34 @@ const PickingFefoView: React.FC = () => {
           qrScanner?.stop();
           setUsandoCamara(false);
           handleScanSku(decodedText);
-        },
-        () => {}
+        }
       );
     } catch (err) {
-      console.error("Error al iniciar cámara:", err);
+      setError("No se pudo iniciar la cámara.");
       setUsandoCamara(false);
     }
   };
 
-  // =====================================================
-  // 🔹 AL ESCANEAR SKU
-  // =====================================================
   const handleScanSku = async (result: string) => {
-    if (!result) return;
+    setError(null);
+    setSuccess(null);
 
     setSku(result);
     await obtenerFefo(result);
   };
 
-  // =====================================================
-  // 🔹 Obtener FEFO desde backend
-  // =====================================================
   const obtenerFefo = async (sku: string) => {
     try {
       const { data } = await axios.get(`${API}/fefo/${sku}`);
       setFefoData(data);
-      alert(`Lote sugerido: ${data.sugerido.codigoLote}`);
+      setSuccess(`Lote sugerido: ${data.sugerido.codigoLote}`);
     } catch (err: any) {
-      alert(err?.response?.data?.message || "No se pudo obtener FEFO.");
+      setError(err?.response?.data?.message || "No se encontró FEFO para este SKU.");
     }
   };
 
-  // =====================================================
-  // 🔹 Confirmar picking
-  // =====================================================
   const confirmarPicking = async () => {
-    if (!fefoData) return alert("Primero escanea un SKU.");
+    if (!fefoData) return setError("Primero escanee un SKU.");
 
     try {
       const payload = {
@@ -148,32 +104,64 @@ const PickingFefoView: React.FC = () => {
       };
 
       const { data } = await axios.post(`${API}/picking`, payload);
-      alert(data.message);
+      setSuccess(data.message);
 
       setSku("");
       setCodigoLoteEscaneado("");
       setCantidad(1);
       setFefoData(null);
-    } catch (err: any) {
-      alert("Error al confirmar picking.");
+    } catch {
+      setError("Error al confirmar el picking.");
     }
   };
 
-  // =====================================================
+  // ==========================================================
   return (
-    <div className="flex justify-center items-center min-h-screen p-6">
-      <Card className="max-w-md w-full space-y-4 bg-white">
-        <h2 className="text-xl font-bold text-center">Picking FEFO</h2>
+    <div className="min-h-screen flex flex-col items-center justify-start p-6 pt-24 text-white">
 
-        <Label>Escanear Producto (SKU)</Label>
+      {/* TÍTULO */}
+      <h1 className="text-3xl font-bold mb-6 flex items-center gap-3">
+        <ScanLine size={30} className="text-blue-400" />
+        Picking FEFO
+      </h1>
 
-        {/* BOTONES PARA ELEGIR MODO */}
-        <div className="flex gap-3">
-          <Button onClick={iniciarCamara}>Usar Cámara</Button>
-          <Button onClick={abrirSelectorArchivo}>Subir Imagen</Button>
+      {/* CARD PRINCIPAL */}
+      <div className="w-full max-w-xl bg-slate-800/70 border border-slate-700 rounded-xl shadow-xl p-6">
+
+        {/* ALERTAS */}
+        {error && (
+          <div className="bg-red-600/80 border border-red-500 p-3 rounded mb-4 text-sm">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="bg-green-600/80 border border-green-500 p-3 rounded mb-4 text-sm">
+            {success}
+          </div>
+        )}
+
+        {/* OPCIONES DE ESCANEO */}
+        <label className="text-slate-300 text-sm mb-2 block">Escanear SKU</label>
+
+        <div className="flex gap-3 mb-4">
+          <button
+            onClick={iniciarCamara}
+            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-semibold"
+          >
+            <Camera size={18} />
+            Usar Cámara
+          </button>
+
+          <button
+            onClick={abrirSelectorArchivo}
+            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-semibold"
+          >
+            <ImageIcon size={18} />
+            Subir Imagen
+          </button>
         </div>
 
-        {/* INPUT OCULTO PARA SUBIR IMAGEN */}
         <input
           type="file"
           ref={fileInputRef}
@@ -182,47 +170,71 @@ const PickingFefoView: React.FC = () => {
           onChange={procesarImagen}
         />
 
-        {/* ÁREA DONDE SE RENDERIZA LA CÁMARA O LA IMAGEN */}
-        <div id="scanner-area" className="mt-3 w-full"></div>
+        {/* ÁREA DE ESCANEO */}
+        <div
+          id="scanner-area"
+          className="w-full h-64 bg-black/40 border border-slate-700 rounded-lg mb-4"
+        ></div>
 
         {sku && (
-          <p className="text-center text-black">
-            <strong>SKU escaneado:</strong> {sku}
+          <p className="text-center text-blue-300">
+            <strong>SKU detectado:</strong> {sku}
           </p>
         )}
 
+        {/* RESULTADO FEFO */}
         {fefoData && (
-          <>
-            <div className="p-3 border rounded-lg bg-gray-100 text-black space-y-1">
-              <p><strong>Lote sugerido:</strong> {fefoData.sugerido.codigoLote}</p>
-              <p><strong>Caducidad:</strong> {new Date(fefoData.sugerido.fechaCaducidad).toLocaleDateString()}</p>
-              <p><strong>Bodega:</strong> {fefoData.sugerido.bodega}</p>
-              <p><strong>Ubicación:</strong> {fefoData.sugerido.ubicacion}</p>
+          <div className="mt-5 space-y-4">
+
+            <div className="p-4 rounded-lg bg-slate-900/60 border border-slate-700">
+              <h3 className="font-semibold text-lg flex items-center gap-2">
+                <PackageSearch className="text-blue-400" /> Lote sugerido
+              </h3>
+              <p className="text-slate-300 mt-1">
+                <strong>Código:</strong> {fefoData.sugerido.codigoLote}
+              </p>
+              <p className="text-slate-300">
+                <strong>Caduca:</strong>{" "}
+                {new Date(fefoData.sugerido.fechaCaducidad).toLocaleDateString("es-CL")}
+              </p>
+              <p className="text-slate-300">
+                <strong>Bodega:</strong> {fefoData.sugerido.bodega}
+              </p>
+              <p className="text-slate-300">
+                <strong>Ubicación:</strong> {fefoData.sugerido.ubicacion}
+              </p>
             </div>
 
-            <Label>Confirmar lote escaneado</Label>
-            <Input
-              placeholder="Código de lote"
+            {/* INGRESAR LOTE */}
+            <label className="text-slate-300 text-sm block">Confirmar Lote Escaneado</label>
+            <input
               value={codigoLoteEscaneado}
               onChange={(e) => setCodigoLoteEscaneado(e.target.value)}
+              className="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              placeholder="Código de lote"
             />
 
-            <Label>Cantidad</Label>
-            <Input
+            {/* CANTIDAD */}
+            <label className="text-slate-300 text-sm block mt-2">Cantidad</label>
+            <input
               type="number"
-              min={1}
               value={cantidad}
+              min={1}
               onChange={(e) => setCantidad(Number(e.target.value))}
+              className="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
 
-            <Button className="mt-4" onClick={confirmarPicking}>
+            {/* CONFIRMAR PICKING */}
+            <button
+              onClick={confirmarPicking}
+              className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-lg mt-4 font-semibold shadow-md shadow-blue-500/20 transition flex items-center justify-center gap-2"
+            >
+              <Check size={20} />
               Confirmar Picking FEFO
-            </Button>
-          </>
+            </button>
+          </div>
         )}
-      </Card>
+      </div>
     </div>
   );
-};
-
-export default PickingFefoView;
+}

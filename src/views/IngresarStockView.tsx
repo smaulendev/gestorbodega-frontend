@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-
 import { getProductos } from "../services/productosServices";
 import { getLotesByProducto } from "../services/lotesServices";
 import { getBodegas } from "../services/bodegasServices";
 import { getUbicacionesByBodega } from "../services/ubicacionesServices";
 import { ingresarStock } from "../services/inventarioServices";
+import { PackagePlus, Warehouse } from "lucide-react";
 
 export default function IngresarStockView() {
   const [productos, setProductos] = useState([]);
@@ -13,8 +13,8 @@ export default function IngresarStockView() {
   const [ubicaciones, setUbicaciones] = useState([]);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     productoId: "",
@@ -24,75 +24,38 @@ export default function IngresarStockView() {
     cantidad: "",
   });
 
-  // -----------------------------
-  // Cargar productos y bodegas al iniciar
-  // -----------------------------
   useEffect(() => {
     cargarProductos();
     cargarBodegas();
   }, []);
 
-  const cargarProductos = async () => {
-    const res = await getProductos();
-    setProductos(res);
-  };
+  const cargarProductos = async () => setProductos(await getProductos());
+  const cargarBodegas = async () => setBodegas(await getBodegas());
 
-  const cargarBodegas = async () => {
-    const res = await getBodegas();
-    setBodegas(res);
-  };
-
-  // -----------------------------
-  // Cargar lotes cuando cambia producto
-  // -----------------------------
   useEffect(() => {
-    if (form.productoId) {
-      cargarLotes(form.productoId);
-    } else {
-      setLotes([]);
-    }
+    if (form.productoId) cargarLotes(form.productoId);
+    else setLotes([]);
   }, [form.productoId]);
 
-  const cargarLotes = async (productoId) => {
-    const res = await getLotesByProducto(productoId);
-    setLotes(res);
-  };
+  const cargarLotes = async (productoId: string) =>
+    setLotes(await getLotesByProducto(productoId));
 
-  // -----------------------------
-  // Cargar ubicaciones cuando cambia bodega
-  // -----------------------------
   useEffect(() => {
-    if (form.bodegaId) {
-      cargarUbicaciones(form.bodegaId);
-    } else {
-      setUbicaciones([]);
-    }
+    if (form.bodegaId) cargarUbicaciones(form.bodegaId);
+    else setUbicaciones([]);
   }, [form.bodegaId]);
 
-  const cargarUbicaciones = async (bodegaId) => {
-    const res = await getUbicacionesByBodega(bodegaId);
-    setUbicaciones(res);
-  };
+  const cargarUbicaciones = async (bodegaId: string) =>
+    setUbicaciones(await getUbicacionesByBodega(bodegaId));
 
-  // -----------------------------
-  // Manejo de cambios en inputs/selects
-  // -----------------------------
-  const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const handleChange = (e: any) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
-  // -----------------------------
-  // ✔ Handle Submit FINAL
-  // -----------------------------
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
     setSuccess(null);
 
-    // VALIDACIÓN
     if (
       !form.productoId ||
       !form.loteId ||
@@ -100,7 +63,7 @@ export default function IngresarStockView() {
       !form.ubicacionId ||
       !form.cantidad
     ) {
-      setError("Debe completar todos los campos antes de ingresar stock.");
+      setError("Debe completar todos los campos.");
       setLoading(false);
       return;
     }
@@ -114,7 +77,6 @@ export default function IngresarStockView() {
     };
 
     const res = await ingresarStock(payload);
-
     setLoading(false);
 
     if (!res.ok) {
@@ -122,10 +84,8 @@ export default function IngresarStockView() {
       return;
     }
 
-    // ÉXITO
-    setSuccess("Stock ingresado correctamente");
+    setSuccess("Stock ingresado correctamente.");
 
-    // RESET FORM
     setForm({
       productoId: "",
       loteId: "",
@@ -138,97 +98,116 @@ export default function IngresarStockView() {
     setUbicaciones([]);
   };
 
-  // -----------------------------
-  // RENDER
-  // -----------------------------
   return (
-    <div className="p-5 text-white">
-      <h1 className="text-2xl mb-5">Ingresar Stock</h1>
+<div className="min-h-screen flex flex-col items-center justify-start p-6 pt-24 text-white">
 
-      {/* Errores */}
-      {error && <div className="bg-red-600 p-3 rounded mb-3">{error}</div>}
+      {/* TÍTULO */}
+      <h1 className="text-3xl font-bold mb-6 flex items-center gap-3">
+        <PackagePlus size={30} className="text-blue-400" />
+        Ingresar Stock
+      </h1>
 
-      {/* Mensaje éxito */}
-      {success && <div className="bg-green-600 p-3 rounded mb-3">{success}</div>}
+      <div className="max-w-xl bg-slate-800/70 border border-slate-700 rounded-xl shadow-xl p-6">
+        {/* ALERTAS */}
+        {error && (
+          <div className="bg-red-600/80 border border-red-500 p-3 rounded mb-4 text-sm">
+            {error}
+          </div>
+        )}
 
-      {/* Producto */}
-      <select
-        name="productoId"
-        value={form.productoId}
-        onChange={handleChange}
-        className="w-full p-2 rounded bg-gray-800"
-      >
-        <option value="">Seleccione un producto</option>
-        {productos.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.nombre}
-          </option>
-        ))}
-      </select>
+        {success && (
+          <div className="bg-green-600/80 border border-green-500 p-3 rounded mb-4 text-sm">
+            {success}
+          </div>
+        )}
 
-      {/* Lote */}
-      <select
-        name="loteId"
-        value={form.loteId}
-        onChange={handleChange}
-        className="w-full p-2 mt-3 rounded bg-gray-800"
-      >
-        <option value="">Seleccione un lote</option>
-        {lotes.map((l) => (
-          <option key={l.id} value={l.id}>
-            {l.codigoLote} — vence {new Date(l.fechaCaducidad).toLocaleDateString()}
-          </option>
-        ))}
-      </select>
+        {/* PRODUCTO */}
+        <label className="text-slate-300 text-sm mb-1 block">Producto</label>
+        <select
+          name="productoId"
+          value={form.productoId}
+          onChange={handleChange}
+          className="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 mb-4"
+        >
+          <option value="">Seleccione un producto</option>
+          {productos.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.nombre}
+            </option>
+          ))}
+        </select>
 
-      {/* Bodega */}
-      <select
-        name="bodegaId"
-        value={form.bodegaId}
-        onChange={handleChange}
-        className="w-full p-2 mt-3 rounded bg-gray-800"
-      >
-        <option value="">Seleccione bodega</option>
-        {bodegas.map((b) => (
-          <option key={b.id} value={b.id}>
-            {b.nombre}
-          </option>
-        ))}
-      </select>
+        {/* LOTE */}
+        <label className="text-slate-300 text-sm mb-1 block">Lote</label>
+        <select
+          name="loteId"
+          value={form.loteId}
+          onChange={handleChange}
+          className="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 mb-4"
+        >
+          <option value="">Seleccione un lote</option>
+          {lotes.map((l) => (
+            <option key={l.id} value={l.id}>
+              {l.codigoLote} — vence{" "}
+              {new Date(l.fechaCaducidad).toLocaleDateString()}
+            </option>
+          ))}
+        </select>
 
-      {/* Ubicación */}
-      <select
-        name="ubicacionId"
-        value={form.ubicacionId}
-        onChange={handleChange}
-        className="w-full p-2 mt-3 rounded bg-gray-800"
-      >
-        <option value="">Seleccione ubicación</option>
-        {ubicaciones.map((u) => (
-          <option key={u.id} value={u.id}>
-            {u.nombre} — {u.pasillo} / {u.seccion}
-          </option>
-        ))}
-      </select>
+        {/* BODEGA */}
+        <label className="text-slate-300 text-sm mb-1 block flex items-center gap-2">
+          <Warehouse size={16} className="text-cyan-300" /> Bodega
+        </label>
+        <select
+          name="bodegaId"
+          value={form.bodegaId}
+          onChange={handleChange}
+          className="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 mb-4"
+        >
+          <option value="">Seleccione bodega</option>
+          {bodegas.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.nombre}
+            </option>
+          ))}
+        </select>
 
-      {/* Cantidad */}
-      <input
-        type="number"
-        name="cantidad"
-        value={form.cantidad}
-        placeholder="Cantidad"
-        onChange={handleChange}
-        className="w-full p-2 mt-3 rounded bg-gray-800"
-      />
+        {/* UBICACIÓN */}
+        <label className="text-slate-300 text-sm mb-1 block">Ubicación</label>
+        <select
+          name="ubicacionId"
+          value={form.ubicacionId}
+          onChange={handleChange}
+          className="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 mb-4"
+        >
+          <option value="">Seleccione ubicación</option>
+          {ubicaciones.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.nombre} — {u.pasillo}/{u.seccion}
+            </option>
+          ))}
+        </select>
 
-      {/* Botón */}
-      <button
-        onClick={handleSubmit}
-        disabled={loading}
-        className="mt-4 w-full bg-blue-600 hover:bg-blue-700 p-3 rounded"
-      >
-        {loading ? "Procesando..." : "Ingresar Stock"}
-      </button>
+        {/* CANTIDAD */}
+        <label className="text-slate-300 text-sm mb-1 block">Cantidad</label>
+        <input
+          type="number"
+          name="cantidad"
+          value={form.cantidad}
+          onChange={handleChange}
+          className="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 mb-6"
+          placeholder="Cantidad"
+        />
+
+        {/* BOTÓN */}
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-lg text-white font-semibold shadow-md shadow-blue-500/20 transition"
+        >
+          {loading ? "Procesando..." : "Ingresar Stock"}
+        </button>
+      </div>
     </div>
   );
 }
