@@ -9,17 +9,28 @@ import BodegasView from "../views/BodegasView";
 import InventarioView from "../views/InventarioView";
 import MovimientosView from "../views/MovimientosView";
 import PickingFefoView from "../views/PickingFefoView";
-import UsuariosView from "../views/UsuariosView"; // 👈 NUEVO
+import UsuariosView from "../views/UsuariosView";
+import DashboardView from "../views/DashboardView";
 
 import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRouter() {
   return (
     <Routes>
-      {/* Rutas públicas */}
+      {/* RUTA PÚBLICA */}
       <Route path="/login" element={<LoginView />} />
 
-      {/* Rutas protegidas */}
+      {/* DASHBOARD COMO HOME */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN", "OPERARIO", "VENDEDOR"]}>
+            <DashboardView />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* RUTAS PROTEGIDAS */}
       <Route
         path="/productos"
         element={
@@ -92,7 +103,7 @@ export default function AppRouter() {
         }
       />
 
-      {/* 👇 NUEVA RUTA: ADMINISTRACIÓN DE USUARIOS */}
+      {/* SOLO ADMIN: GESTIÓN DE USUARIOS */}
       <Route
         path="/usuarios"
         element={
@@ -102,8 +113,8 @@ export default function AppRouter() {
         }
       />
 
-      {/* DEFAULT REDIRECT */}
-      <Route path="*" element={<Navigate to="/inventario" />} />
+      {/* FALLBACK */}
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
 }

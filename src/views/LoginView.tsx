@@ -1,36 +1,41 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { LogIn } from "lucide-react";
 
 const LoginView: React.FC = () => {
   const { login } = useAuth();
-  const navigate = useNavigate();
 
-  const [email, setEmail] = useState("admin@bodega.cl");
+  const [email, setEmail] = useState("admin@bodega.cl"); // o sebastian@bodega.cl según tu BD
   const [password, setPassword] = useState("123456");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    const result = await login(email, password);
-
-    if (!result.ok) {
-      setError(result.error || "Error al iniciar sesión");
-      return;
+    try {
+      // 👇 ahora solo llamamos a login y dejamos que el AuthContext haga el navigate
+      await login(email, password);
+      // si quieres forzar ir a /inventario en vez de la ruta del AuthContext,
+      // puedes mover el navigate aquí y quitarlo del AuthContext.
+    } catch (err: any) {
+      console.error("Error al iniciar sesión:", err);
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Error al iniciar sesión. Verifica tus credenciales.";
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
-
-    navigate("/inventario");
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0f172a] px-6">
-
       {/* CARD */}
       <div className="w-full max-w-sm bg-[#1e293b]/60 backdrop-blur-xl border border-[#334155] rounded-2xl p-8 shadow-[0_0_40px_-10px_rgba(59,130,246,0.4)]">
-
         {/* Título */}
         <h2 className="text-center text-3xl font-bold text-white mb-6 tracking-tight">
           Bienvenido a <span className="text-blue-400">Bodega FEFO</span>
@@ -45,7 +50,6 @@ const LoginView: React.FC = () => {
 
         {/* FORM */}
         <form onSubmit={handleSubmit} className="space-y-4">
-
           {/* Email */}
           <div>
             <label className="text-gray-300 text-sm font-medium">Correo</label>
@@ -55,28 +59,35 @@ const LoginView: React.FC = () => {
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1 w-full p-3 rounded-lg bg-[#0f172a] border border-[#334155] text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
               placeholder="correo@empresa.cl"
+              autoComplete="email"
+              required
             />
           </div>
 
           {/* Password */}
           <div>
-            <label className="text-gray-300 text-sm font-medium">Contraseña</label>
+            <label className="text-gray-300 text-sm font-medium">
+              Contraseña
+            </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 w-full p-3 rounded-lg bg-[#0f172a] border border-[#334155] text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
               placeholder="••••••••"
+              autoComplete="current-password"
+              required
             />
           </div>
 
           {/* Botón */}
           <button
             type="submit"
-            className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg flex items-center justify-center gap-2 font-semibold tracking-wide shadow-lg shadow-blue-500/20 transition-all"
+            disabled={loading}
+            className="w-full mt-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-lg flex items-center justify-center gap-2 font-semibold tracking-wide shadow-lg shadow-blue-500/20 transition-all"
           >
             <LogIn size={20} />
-            Entrar
+            {loading ? "Ingresando..." : "Entrar"}
           </button>
         </form>
 

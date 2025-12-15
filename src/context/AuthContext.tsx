@@ -48,6 +48,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // 🔐 LOGIN
+// src/context/AuthContext.tsx
+// ...
+
   const login = async (email: string, password: string) => {
     const data: LoginResponse = await loginRequest(email, password);
 
@@ -60,8 +63,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setState(newState);
     localStorage.setItem("auth", JSON.stringify(newState));
 
-    navigate("/productos"); // o la ruta que prefieras
+    // 👇 Antes tenías "/productos"
+    navigate("/"); // home -> Dashboard
   };
+
 
   // 🚪 LOGOUT
   const logout = () => {

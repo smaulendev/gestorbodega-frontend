@@ -8,12 +8,12 @@ import {
   Package,
   PackagePlus,
   Layers,
-  ArrowLeftRight,
   ListOrdered,
   LogOut,
   Menu,
   X,
-  Users, // 👈 NUEVO ICONO
+  Users,
+  Activity, // 👈 para Dashboard
 } from "lucide-react";
 
 export default function Navbar() {
@@ -27,7 +27,7 @@ export default function Navbar() {
     <nav className="bg-[#0f172a] border-b border-[#1e293b] px-6 py-3 text-white relative">
       {/* CONTENEDOR PRINCIPAL */}
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* LOGO */}
+        {/* LOGO → DASHBOARD */}
         <Link
           to="/"
           className="flex items-center gap-2 text-2xl font-bold tracking-tight text-blue-400 hover:text-blue-300 transition"
@@ -49,6 +49,11 @@ export default function Navbar() {
         {/* MENÚ DESKTOP */}
         {isAuthenticated && (
           <div className="hidden md:flex items-center gap-6 text-sm font-medium">
+            {/* Dashboard visible para todos los roles autenticados */}
+            <Link className="nav-item" to="/">
+              <Activity size={18} /> Dashboard
+            </Link>
+
             <Link className="nav-item" to="/bodegas">
               <Home size={18} /> Bodegas
             </Link>
@@ -77,15 +82,13 @@ export default function Navbar() {
                   <PackagePlus size={18} /> Ingresar Stock
                 </Link>
 
-                <Link className="nav-item" to="/transferencias">
-                  <ArrowLeftRight size={18} /> Transferencias
-                </Link>
+                {/* 🔴 Transferencias eliminada por ahora */}
 
                 <Link className="nav-item" to="/movimientos">
                   <Layers size={18} /> Movimientos
                 </Link>
 
-                {/* 👇 NUEVO APARTADO SOLO ADMIN */}
+                {/* SOLO ADMIN */}
                 <Link className="nav-item" to="/usuarios">
                   <Users size={18} /> Usuarios
                 </Link>
@@ -113,8 +116,12 @@ export default function Navbar() {
       </div>
 
       {/* MENÚ MÓVIL */}
-      {open && (
+      {open && isAuthenticated && (
         <div className="md:hidden bg-[#0f172a] border-t border-[#1e293b] mt-3 py-3 space-y-3 animate-fade-in">
+          <Link className="nav-mobile" to="/" onClick={closeMenu}>
+            <Activity size={18} /> Dashboard
+          </Link>
+
           <Link className="nav-mobile" to="/bodegas" onClick={closeMenu}>
             <Home size={18} /> Bodegas
           </Link>
@@ -147,9 +154,7 @@ export default function Navbar() {
                 <PackagePlus size={18} /> Ingresar Stock
               </Link>
 
-              {/* <Link className="nav-mobile" to="/transferencias" onClick={closeMenu}>
-                <ArrowLeftRight size={18} /> Transferencias
-              </Link> */}
+              {/* 🔴 Transferencias comentada/eliminada */}
 
               <Link
                 className="nav-mobile"
@@ -159,7 +164,6 @@ export default function Navbar() {
                 <Layers size={18} /> Movimientos
               </Link>
 
-              {/* 👇 NUEVO EN MÓVIL SOLO ADMIN */}
               <Link className="nav-mobile" to="/usuarios" onClick={closeMenu}>
                 <Users size={18} /> Usuarios
               </Link>
