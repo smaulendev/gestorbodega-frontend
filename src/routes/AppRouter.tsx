@@ -9,13 +9,13 @@ import BodegasView from "../views/BodegasView";
 import InventarioView from "../views/InventarioView";
 import MovimientosView from "../views/MovimientosView";
 import PickingFefoView from "../views/PickingFefoView";
+import UsuariosView from "../views/UsuariosView"; // 👈 NUEVO
 
 import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRouter() {
   return (
     <Routes>
-
       {/* Rutas públicas */}
       <Route path="/login" element={<LoginView />} />
 
@@ -92,9 +92,18 @@ export default function AppRouter() {
         }
       />
 
+      {/* 👇 NUEVA RUTA: ADMINISTRACIÓN DE USUARIOS */}
+      <Route
+        path="/usuarios"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN"]}>
+            <UsuariosView />
+          </ProtectedRoute>
+        }
+      />
+
       {/* DEFAULT REDIRECT */}
       <Route path="*" element={<Navigate to="/inventario" />} />
-
     </Routes>
   );
 }

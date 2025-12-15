@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   X,
+  Users, // 👈 NUEVO ICONO
 } from "lucide-react";
 
 export default function Navbar() {
@@ -20,12 +21,12 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   const toggleMenu = () => setOpen(!open);
+  const closeMenu = () => setOpen(false);
 
   return (
     <nav className="bg-[#0f172a] border-b border-[#1e293b] px-6 py-3 text-white relative">
       {/* CONTENEDOR PRINCIPAL */}
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-
         {/* LOGO */}
         <Link
           to="/"
@@ -48,7 +49,6 @@ export default function Navbar() {
         {/* MENÚ DESKTOP */}
         {isAuthenticated && (
           <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-
             <Link className="nav-item" to="/bodegas">
               <Home size={18} /> Bodegas
             </Link>
@@ -84,6 +84,11 @@ export default function Navbar() {
                 <Link className="nav-item" to="/movimientos">
                   <Layers size={18} /> Movimientos
                 </Link>
+
+                {/* 👇 NUEVO APARTADO SOLO ADMIN */}
+                <Link className="nav-item" to="/usuarios">
+                  <Users size={18} /> Usuarios
+                </Link>
               </>
             )}
           </div>
@@ -94,13 +99,12 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-4 ml-4">
             <span className="text-gray-300 text-sm">
               {user?.nombre}{" "}
-              <span className="text-blue-300 font-semibold">({user?.rol})</span>
+              <span className="text-blue-300 font-semibold">
+                ({user?.rol})
+              </span>
             </span>
 
-            <button
-              onClick={logout}
-              className="btn-logout"
-            >
+            <button onClick={logout} className="btn-logout">
               <LogOut size={16} />
               Salir
             </button>
@@ -111,47 +115,62 @@ export default function Navbar() {
       {/* MENÚ MÓVIL */}
       {open && (
         <div className="md:hidden bg-[#0f172a] border-t border-[#1e293b] mt-3 py-3 space-y-3 animate-fade-in">
-
-          <Link className="nav-mobile" to="/bodegas">
+          <Link className="nav-mobile" to="/bodegas" onClick={closeMenu}>
             <Home size={18} /> Bodegas
           </Link>
 
-          <Link className="nav-mobile" to="/inventario">
+          <Link className="nav-mobile" to="/inventario" onClick={closeMenu}>
             <Layers size={18} /> Inventario
           </Link>
 
-          <Link className="nav-mobile" to="/picking-fefo">
+          <Link className="nav-mobile" to="/picking-fefo" onClick={closeMenu}>
             <ClipboardCheck size={18} /> Picking FEFO
           </Link>
 
           {(user?.rol === "ADMIN" || user?.rol === "VENDEDOR") && (
-            <Link className="nav-mobile" to="/productos">
+            <Link className="nav-mobile" to="/productos" onClick={closeMenu}>
               <Package size={18} /> Productos
             </Link>
           )}
 
           {user?.rol === "ADMIN" && (
             <>
-              <Link className="nav-mobile" to="/lotes">
+              <Link className="nav-mobile" to="/lotes" onClick={closeMenu}>
                 <ListOrdered size={18} /> Lotes
               </Link>
 
-              <Link className="nav-mobile" to="/ingresar-stock">
+              <Link
+                className="nav-mobile"
+                to="/ingresar-stock"
+                onClick={closeMenu}
+              >
                 <PackagePlus size={18} /> Ingresar Stock
               </Link>
 
-              {/* <Link className="nav-mobile" to="/transferencias">
+              {/* <Link className="nav-mobile" to="/transferencias" onClick={closeMenu}>
                 <ArrowLeftRight size={18} /> Transferencias
               </Link> */}
 
-              <Link className="nav-mobile" to="/movimientos">
+              <Link
+                className="nav-mobile"
+                to="/movimientos"
+                onClick={closeMenu}
+              >
                 <Layers size={18} /> Movimientos
+              </Link>
+
+              {/* 👇 NUEVO EN MÓVIL SOLO ADMIN */}
+              <Link className="nav-mobile" to="/usuarios" onClick={closeMenu}>
+                <Users size={18} /> Usuarios
               </Link>
             </>
           )}
 
           <button
-            onClick={logout}
+            onClick={() => {
+              closeMenu();
+              logout();
+            }}
             className="btn-logout w-full flex justify-center mt-2"
           >
             <LogOut size={16} />
