@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   getInventario,
   getInventarioFiltrado,
+  ajustarStock,
 } from "../services/inventarioServices";
 import { getProductos } from "../services/productosServices";
 import { getBodegas } from "../services/bodegasServices";
@@ -9,14 +10,14 @@ import { getLotes } from "../services/lotesServices";
 import { Layers, Package, Warehouse, ListFilter, Download } from "lucide-react";
 
 export default function InventarioView() {
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<any[]>([]);
 
-  const [productos, setProductos] = useState([]);
-  const [bodegas, setBodegas] = useState([]);
-  const [lotes, setLotes] = useState([]);
+  const [productos, setProductos] = useState<any[]>([]);
+  const [bodegas, setBodegas] = useState<any[]>([]);
+  const [lotes, setLotes] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const [filters, setFilters] = useState({
     productoId: "",
@@ -26,6 +27,14 @@ export default function InventarioView() {
   });
 
   const [exportMenu, setExportMenu] = useState(false);
+
+  // ====== ESTADO PARA AJUSTAR STOCK ======
+  const [ajusteOpen, setAjusteOpen] = useState(false);
+  const [ajusteTipo, setAjusteTipo] = useState<"POS" | "NEG">("POS");
+  const [ajusteCantidad, setAjusteCantidad] = useState(1);
+  const [ajusteMotivo, setAjusteMotivo] = useState("");
+  const [itemSeleccionado, setItemSeleccionado] = useState<any | null>(null);
+  const [loadingAjuste, setLoadingAjuste] = useState(false);
 
   // INIT LOAD
   useEffect(() => {
@@ -73,7 +82,7 @@ export default function InventarioView() {
     setError(null);
 
     try {
-      const params = { ...filters };
+      const params: any = { ...filters };
       Object.keys(params).forEach(
         (key) => (params[key] === "" || params[key] == null) && delete params[key]
       );
@@ -93,7 +102,7 @@ export default function InventarioView() {
     setLoading(false);
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: any) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
@@ -110,15 +119,67 @@ export default function InventarioView() {
     cargarInventarioGeneral();
   };
 
-  const estadoClass = (estado) => {
+  const estadoClass = (estado: string) => {
     if (estado === "Disponible") return "text-green-400 font-semibold";
     if (estado === "Reservado") return "text-yellow-400 font-semibold";
+    if (estado === "Agotado") return "text-red-400 font-semibold";
     return "text-blue-400 font-semibold";
   };
 
-  const exportar = (formato) => {
+  const exportar = (formato: string) => {
     window.open(`http://localhost:3000/inventario/export?format=${formato}`);
     setExportMenu(false);
+  };
+
+  // ====== LÓGICA AJUSTE STOCK ======
+
+  const openAjusteModal = (inv: any, tipo: "POS" | "NEG") => {
+    setItemSeleccionado(inv);
+    setAjusteTipo(tipo);
+    setAjusteCantidad(1);
+    setAjusteMotivo("");
+    setAjusteOpen(true);
+  };
+
+  const handleConfirmarAjuste = async () => {
+    if (!itemSeleccionado) return;
+    if (ajusteCantidad <= 0) {
+      alert("La cantidad debe ser mayor a 0");
+      return;
+    }
+
+    try {
+      setLoadingAjuste(true);
+
+      const res = await ajustarStock(itemSeleccionado.id, {
+        cantidad: ajusteCantidad,
+        tipo: ajusteTipo,
+        motivo:
+          ajusteMotivo ||
+          (ajusteTipo === "POS"
+            ? "Ajuste positivo de stock"
+            : "Ajuste negativo de stock"),
+      });
+
+      if (!res.ok) {
+        alert(res.error);
+        return;
+      }
+
+      const actualizado = res.data.inventarioActualizado ?? res.data;
+
+      // Actualizar el item en el estado
+      setItems((prev) =>
+        prev.map((it) => (it.id === actualizado.id ? actualizado : it))
+      );
+
+      setAjusteOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("Error al ajustar stock");
+    } finally {
+      setLoadingAjuste(false);
+    }
   };
 
   // ===================== RENDER ===================== //
@@ -177,7 +238,7 @@ export default function InventarioView() {
             className="input-dark"
           >
             <option value="">Producto</option>
-            {productos.map((p) => (
+            {productos.map((p: any) => (
               <option key={p.id} value={p.id}>
                 {p.nombre}
               </option>
@@ -191,7 +252,7 @@ export default function InventarioView() {
             className="input-dark"
           >
             <option value="">Bodega</option>
-            {bodegas.map((b) => (
+            {bodegas.map((b: any) => (
               <option key={b.id} value={b.id}>
                 {b.nombre}
               </option>
@@ -205,7 +266,7 @@ export default function InventarioView() {
             className="input-dark"
           >
             <option value="">Lote</option>
-            {lotes.map((l) => (
+            {lotes.map((l: any) => (
               <option key={l.id} value={l.id}>
                 {l.codigoLote}
               </option>
@@ -253,7 +314,7 @@ export default function InventarioView() {
 
       <div className="grid gap-4">
         {!loading &&
-          items.map((inv) => (
+          items.map((inv: any) => (
             <div
               key={inv.id}
               className="bg-[#1e293b]/70 border border-[#334155] p-5 rounded-xl shadow-lg hover:shadow-blue-500/10 transition"
@@ -297,9 +358,87 @@ export default function InventarioView() {
                   <strong>En tránsito:</strong> {inv.cantidadTransito}
                 </p>
               </div>
+
+              {/* BOTONES AJUSTE STOCK */}
+              <div className="flex justify-end gap-3 mt-4">
+                <button
+                  className="px-3 py-1 text-xs rounded-md bg-emerald-600 hover:bg-emerald-500"
+                  onClick={() => openAjusteModal(inv, "POS")}
+                >
+                  + Agregar
+                </button>
+                <button
+                  className="px-3 py-1 text-xs rounded-md bg-red-600 hover:bg-red-500"
+                  onClick={() => openAjusteModal(inv, "NEG")}
+                >
+                  − Quitar
+                </button>
+              </div>
             </div>
           ))}
       </div>
+
+      {/* MODAL AJUSTE */}
+      {ajusteOpen && itemSeleccionado && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-md rounded-xl bg-slate-900 p-6 shadow-xl border border-slate-700">
+            <h3 className="text-lg font-semibold text-white mb-4">
+              {ajusteTipo === "POS" ? "Agregar stock" : "Quitar stock"}
+            </h3>
+
+            <p className="text-sm text-slate-300 mb-3">
+              <span className="font-medium">
+                {itemSeleccionado.producto?.nombre} —{" "}
+                {itemSeleccionado.lote?.codigoLote}
+              </span>
+              <br />
+              Disponible actual:{" "}
+              <span className="font-mono">
+                {itemSeleccionado.cantidadDisponible}
+              </span>
+            </p>
+
+            <label className="block text-sm text-slate-200 mb-2">
+              Cantidad
+              <input
+                type="number"
+                min={1}
+                value={ajusteCantidad}
+                onChange={(e) => setAjusteCantidad(Number(e.target.value))}
+                className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </label>
+
+            <label className="block text-sm text-slate-200 mb-4">
+              Motivo (opcional)
+              <input
+                type="text"
+                value={ajusteMotivo}
+                onChange={(e) => setAjusteMotivo(e.target.value)}
+                placeholder="Ajuste por conteo físico..."
+                className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </label>
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                className="px-4 py-2 rounded-md text-sm bg-slate-700 text-white hover:bg-slate-600"
+                onClick={() => setAjusteOpen(false)}
+                disabled={loadingAjuste}
+              >
+                Cancelar
+              </button>
+              <button
+                className="px-4 py-2 rounded-md text-sm bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-60"
+                onClick={handleConfirmarAjuste}
+                disabled={loadingAjuste}
+              >
+                {loadingAjuste ? "Guardando..." : "Confirmar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* === ESTILOS REUSABLES === */}
       <style>{`
